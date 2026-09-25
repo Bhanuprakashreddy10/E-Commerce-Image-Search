@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const productRoutes = require('./routes/productRoutes');
+const searchRoutes = require('./routes/searchRoutes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/products', productRoutes);
+app.use('/api/search', searchRoutes);
 
 // Catch 404 for undefined routes
 app.use((req, res, next) => {
@@ -49,6 +51,14 @@ app.use((err, req, res, next) => {
     return res.status(400).json({
       success: false,
       message: err.message
+    });
+  }
+
+  // Malformed form-data or stream error
+  if (err.message && (err.message.includes('Unexpected end of form') || err.message.includes('Multipart: Boundary not found'))) {
+    return res.status(400).json({
+      success: false,
+      message: 'Malformed form-data or unexpected end of upload.'
     });
   }
 

@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit2, Trash2, Eye, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Trash2, Eye, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { getImageUrl } from '../services/productService';
 
 export default function ProductCard({ product, onDelete, onView }) {
   const [imageError, setImageError] = useState(false);
   const imageUrl = getImageUrl(product.image_url);
 
+  const hasSimilarity = product.similarity !== undefined && product.similarity !== null;
+  const matchPercentage = hasSimilarity ? Math.round(product.similarity * 100) : null;
+
+  const getSimilarityBadgeClass = (score) => {
+    if (score >= 85) return 'similarity-badge-high';
+    if (score >= 65) return 'similarity-badge-med';
+    return 'similarity-badge-low';
+  };
+
   return (
-    <div className="product-card">
+    <div className={`product-card ${hasSimilarity ? 'is-search-result' : ''}`}>
       <div className="product-image-wrap">
         {imageUrl && !imageError ? (
           <img
@@ -22,6 +31,13 @@ export default function ProductCard({ product, onDelete, onView }) {
           <div className="image-placeholder">
             <ImageIcon size={32} />
             <span>No Image</span>
+          </div>
+        )}
+
+        {hasSimilarity && (
+          <div className={`similarity-badge ${getSimilarityBadgeClass(matchPercentage)}`}>
+            <Sparkles size={12} />
+            <span>{matchPercentage}% Match</span>
           </div>
         )}
 

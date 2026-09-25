@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Tag, DollarSign, Calendar, Image as ImageIcon } from 'lucide-react';
+import { X, Tag, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { getImageUrl } from '../services/productService';
 
 export default function ProductDetailModal({ product, onClose }) {
@@ -55,23 +55,41 @@ export default function ProductDetailModal({ product, onClose }) {
             <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {product.name}
             </h4>
-            {product.category && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                color: 'var(--color-primary)',
-                background: 'var(--color-primary-light)',
-                padding: '0.2rem 0.6rem',
-                borderRadius: 'var(--radius-full)',
-                marginTop: '0.35rem'
-              }}>
-                <Tag size={12} />
-                {product.category}
-              </span>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+              {product.category && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--color-primary)',
+                  background: 'var(--color-primary-light)',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 'var(--radius-full)'
+                }}>
+                  <Tag size={12} />
+                  {product.category}
+                </span>
+              )}
+              {product.similarity !== undefined && product.similarity !== null && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#065f46',
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 'var(--radius-full)'
+                }}>
+                  <Sparkles size={12} />
+                  {Math.round(product.similarity * 100)}% Similarity Match
+                </span>
+              )}
+            </div>
           </div>
 
           <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-primary)' }}>

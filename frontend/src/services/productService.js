@@ -74,6 +74,24 @@ export const productService = {
   async deleteProduct(id) {
     const response = await apiClient.delete(`/products/${id}`);
     return response.data;
+  },
+
+  /**
+   * Search products visually by query image
+   * @param {File} file - Image file to search
+   * @param {number} limit - Maximum number of results to return
+   */
+  async searchByImage(file, limit = 10) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post('/search/visual', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      params: { limit }
+    });
+    return response.data;
   }
 };
 

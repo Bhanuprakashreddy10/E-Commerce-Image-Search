@@ -1,8 +1,48 @@
 const productService = require('../services/productService');
 const { deleteImageFile } = require('../middleware/upload');
-
+const { generateEmbedding } = require('../services/embeddingService');
 // Regex for UUID v4 / generic UUID validation
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Helper to generate 512-d CLIP embedding for an uploaded product image.
+ * Safely cleans up the uploaded file and sends appropriate error response on failure.
+ */
+const generateProductEmbedding = async (file, res) => {
+  try {
+    const embeddedImage = await generateEmbedding(file.path);
+    return { embedding: JSON.stringify(embeddedImage) };
+  } catch (embErr) {
+    deleteImageFile(`/uploads/products/${file.filename}`);
+
+    if (
+      embErr.code === 'ECONNREFUSED' ||
+      embErr.code === 'ENOTFOUND' ||
+      embErr.message?.includes('Embedding service unavailable') ||
+      embErr.message?.includes('ECONNREFUSED')
+    ) {
+      res.status(503).json({
+        success: false,
+        message: 'Embedding service is unavailable. Please ensure the Python CLIP service is running.'
+      });
+      return { handled: true };
+    }
+
+    if (embErr.message && embErr.message.includes('Invalid embedding dimensions')) {
+      res.status(502).json({
+        success: false,
+        message: embErr.message
+      });
+      return { handled: true };
+    }
+
+    res.status(500).json({
+      success: false,
+      message: embErr.message || 'Failed to generate image embedding.'
+    });
+    return { handled: true };
+  }
+};
 
 class ProductController {
   /**
@@ -32,14 +72,23 @@ class ProductController {
         });
       }
 
-      const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
+      let embedding = null;
+      if (req.file) {
+        const embResult = await generateProductEmbedding(req.file, res);
+        if (embResult.handled) {
+          return;
+        }
+        embedding = embResult.embedding;
+      }
 
+      const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
       const product = await productService.createProduct({
         name: name.trim(),
         description: description ? description.trim() : null,
         category: category ? category.trim() : null,
         price: parseFloat(price),
-        imageUrl
+        imageUrl,
+        embedding
       });
 
       return res.status(201).json({
@@ -139,18 +188,9 @@ class ProductController {
         });
       }
 
-      const updatedProduct = await productService.updateProduct(
-        id,
-        {
-          name: name ? name.trim() : undefined,
-          description: description !== undefined ? description.trim() : undefined,
-          category: category !== undefined ? category.trim() : undefined,
-          price: price !== undefined && price !== '' ? parseFloat(price) : undefined
-        },
-        req.file
-      );
-
-      if (!updatedProduct) {
+      // Check if product exists before generating embedding to avoid wasted inference
+      const existingProduct = await productService.getProductById(id);
+      if (!existingProduct) {
         if (req.file) {
           deleteImageFile(`/uploads/products/${req.file.filename}`);
         }
@@ -159,6 +199,27 @@ class ProductController {
           message: 'Product not found'
         });
       }
+
+      let embedding = undefined;
+      if (req.file) {
+        const embResult = await generateProductEmbedding(req.file, res);
+        if (embResult.handled) {
+          return;
+        }
+        embedding = embResult.embedding;
+      }
+
+      const updatedProduct = await productService.updateProduct(
+        id,
+        {
+          name: name !== undefined ? name.trim() : undefined,
+          description: description !== undefined ? description.trim() : undefined,
+          category: category !== undefined ? category.trim() : undefined,
+          price: price !== undefined && price !== '' ? parseFloat(price) : undefined,
+          embedding
+        },
+        req.file
+      );
 
       return res.status(200).json({
         success: true,

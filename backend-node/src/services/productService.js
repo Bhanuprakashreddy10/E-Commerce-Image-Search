@@ -6,13 +6,14 @@ class ProductService {
    * Create a new product
    * @param {Object} data - { name, description, category, price, imageUrl }
    */
-  async createProduct({ name, description, category, price, imageUrl }) {
+  async createProduct({ name, description, category, price, imageUrl, embedding }) {
     const product = await Product.create({
       name,
       description: description || null,
       category: category || null,
       price,
-      image_url: imageUrl || null
+      image_url: imageUrl || null,
+      embedding: embedding || null,
     });
 
     return product;
@@ -65,18 +66,17 @@ class ProductService {
    * @param {Object} data - { name, description, category, price }
    * @param {Object|null} file - Multer file object if a new image was uploaded
    */
-  async updateProduct(id, { name, description, category, price }, file) {
+  async updateProduct(id, { name, description, category, price, embedding }, file) {
     const product = await Product.findByPk(id);
     if (!product) {
       return null;
     }
-
     const updatePayload = {};
     if (name !== undefined) updatePayload.name = name;
     if (description !== undefined) updatePayload.description = description;
     if (category !== undefined) updatePayload.category = category;
     if (price !== undefined) updatePayload.price = price;
-
+    if (embedding !== undefined) updatePayload.embedding = embedding;
     if (file) {
       const oldImageUrl = product.image_url;
       const newImageUrl = `/uploads/products/${file.filename}`;
@@ -87,7 +87,6 @@ class ProductService {
         deleteImageFile(oldImageUrl);
       }
     }
-
     await product.update(updatePayload);
     return product;
   }

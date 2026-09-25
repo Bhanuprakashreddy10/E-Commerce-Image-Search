@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+require('pgvector/sequelize');
 const { sequelize } = require('../config/database');
 
 const Product = sequelize.define(
@@ -42,6 +43,10 @@ const Product = sequelize.define(
     },
     image_url: {
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    embedding: {
+      type: DataTypes.VECTOR(512),
       allowNull: true
     }
   },

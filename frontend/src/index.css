@@ -638,3 +638,210 @@ textarea.form-control {
     transform: translateY(0);
   }
 }
+
+/* ==========================================================================
+   Visual Search Components & Badges
+   ========================================================================== */
+
+/* Visual Search Action Button */
+.btn-visual-search {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px -1px rgba(79, 70, 229, 0.25), 0 4px 6px -2px rgba(79, 70, 229, 0.15);
+  transition: var(--transition);
+}
+
+.btn-visual-search:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -1px rgba(79, 70, 229, 0.35);
+  color: #ffffff;
+}
+
+/* Similarity Percentage Badge on Product Cards */
+.similarity-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.similarity-badge-high {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.similarity-badge-med {
+  background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.similarity-badge-low {
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Visual Search Active Banner */
+.visual-search-banner {
+  background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.08);
+  animation: slideUp 0.25s ease-out;
+}
+
+.query-image-col {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.query-thumbnail-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid #818cf8;
+  box-shadow: var(--shadow-sm);
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.query-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.query-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.8);
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 1px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.query-info h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.query-filename {
+  font-size: 0.85rem;
+  color: #4f46e5;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.query-stats {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.banner-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Visual Search Modal Styling */
+.search-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c7d2fe;
+}
+
+.visual-search-dropzone {
+  border-color: #a5b4fc;
+  background: #fcfdff;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-search-dropzone:hover,
+.visual-search-dropzone.dragging {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  transform: scale(1.005);
+}
+
+.dropzone-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.visual-preview-box {
+  padding: 1rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preview-image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.visual-query-preview {
+  max-height: 180px;
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  background: #ffffff;
+  object-fit: contain;
+}
+

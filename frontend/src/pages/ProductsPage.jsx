@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Plus,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  Camera,
+  X,
+  ArrowLeft
+} from 'lucide-react';
 import productService from '../services/productService';
 import ProductList from '../components/ProductList';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProductDetailModal from '../components/ProductDetailModal';
+import VisualSearchModal from '../components/VisualSearchModal';
 
 const CATEGORIES = ['All', 'Shoes', 'Electronics', 'Clothing', 'Accessories', 'Home & Kitchen'];
 
@@ -24,7 +33,13 @@ export default function ProductsPage() {
   // View modal state
   const [productToView, setProductToView] = useState(null);
 
-  // Fetch products
+  // Visual search state
+  const [isVisualSearchOpen, setIsVisualSearchOpen] = useState(false);
+  const [isVisualSearchActive, setIsVisualSearchActive] = useState(false);
+  const [visualSearchResults, setVisualSearchResults] = useState([]);
+  const [visualQueryInfo, setVisualQueryInfo] = useState(null); // { previewUrl, fileName }
+
+  // Fetch products (default catalog)
   const fetchProducts = useCallback(async (page = 1, category = selectedCategory) => {
     setIsLoading(true);
     setError(null);
@@ -49,8 +64,10 @@ export default function ProductsPage() {
   }, [selectedCategory]);
 
   useEffect(() => {
-    fetchProducts(1, selectedCategory);
-  }, [selectedCategory, fetchProducts]);
+    if (!isVisualSearchActive) {
+      fetchProducts(1, selectedCategory);
+    }
+  }, [selectedCategory, fetchProducts, isVisualSearchActive]);
 
   // Clear flash message after 4s
   useEffect(() => {
@@ -69,6 +86,24 @@ export default function ProductsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle visual search completion
+  const handleVisualSearchResults = (results, previewUrl, fileName) => {
+    setVisualSearchResults(results);
+    setVisualQueryInfo({ previewUrl, fileName });
+    setIsVisualSearchActive(true);
+    setError(null);
+    setSuccessMessage(`Visual search completed! Found ${results.length} visually matching products.`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Clear visual search and return to default catalog
+  const handleClearVisualSearch = () => {
+    setIsVisualSearchActive(false);
+    setVisualSearchResults([]);
+    setVisualQueryInfo(null);
+    fetchProducts(1, selectedCategory);
+  };
+
   // Delete handling
   const handleDeleteClick = (product) => {
     setProductToDelete(product);
@@ -81,8 +116,12 @@ export default function ProductsPage() {
       await productService.deleteProduct(productToDelete.id);
       setSuccessMessage(`"${productToDelete.name}" deleted successfully.`);
       setProductToDelete(null);
-      // Refresh list
-      fetchProducts(pagination.page, selectedCategory);
+
+      if (isVisualSearchActive) {
+        setVisualSearchResults((prev) => prev.filter((p) => p.id !== productToDelete.id));
+      } else {
+        fetchProducts(pagination.page, selectedCategory);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete product');
     } finally {
@@ -94,27 +133,56 @@ export default function ProductsPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Product Catalog</h1>
+          <h1 className="page-title">
+            {isVisualSearchActive ? 'Visual Search Results' : 'Product Catalog'}
+          </h1>
           <p className="page-subtitle">
-            Manage your store's inventory, prices, and product imagery
+            {isVisualSearchActive
+              ? 'Products ranked by cosine similarity to your uploaded query image'
+              : "Manage your store's inventory, prices, and product imagery"}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Search by Image Button */}
           <button
             type="button"
-            className="btn btn-secondary"
-            onClick={() => fetchProducts(pagination.page, selectedCategory)}
-            title="Refresh list"
-            disabled={isLoading}
+            className="btn btn-visual-search"
+            onClick={() => setIsVisualSearchOpen(true)}
+            title="Search for products using an image"
           >
-            <RefreshCw size={16} className={isLoading ? 'spinner' : ''} />
-            <span>Refresh</span>
+            <Camera size={16} />
+            <span>Search by Image</span>
           </button>
-          <Link to="/products/new" className="btn btn-primary">
-            <Plus size={16} />
-            <span>Create Product</span>
-          </Link>
+
+          {!isVisualSearchActive ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => fetchProducts(pagination.page, selectedCategory)}
+                title="Refresh list"
+                disabled={isLoading}
+              >
+                <RefreshCw size={16} className={isLoading ? 'spinner' : ''} />
+                <span>Refresh</span>
+              </button>
+              <Link to="/products/new" className="btn btn-primary">
+                <Plus size={16} />
+                <span>Create Product</span>
+              </Link>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleClearVisualSearch}
+              title="Return to all products"
+            >
+              <ArrowLeft size={16} />
+              <span>Back to Catalog</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -132,37 +200,93 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Category Filter Pills */}
-      <div className="filter-bar">
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-          Filter Category:
-        </span>
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
-            onClick={() => handleCategorySelect(cat)}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {/* Visual Search Active Banner */}
+      {isVisualSearchActive && visualQueryInfo && (
+        <div className="visual-search-banner">
+          <div className="query-image-col">
+            <div className="query-thumbnail-wrap">
+              <img
+                src={visualQueryInfo.previewUrl}
+                alt="Query Thumbnail"
+                className="query-thumbnail"
+              />
+              <span className="query-badge">Query Image</span>
+            </div>
+            <div className="query-info">
+              <h4>Searching by Image</h4>
+              <p className="query-filename">{visualQueryInfo.fileName}</p>
+              <p className="query-stats">
+                {visualSearchResults.length} {visualSearchResults.length === 1 ? 'match' : 'matches'} found • AI CLIP Cosine Similarity
+              </p>
+            </div>
+          </div>
 
-      {isLoading ? (
+          <div className="banner-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setIsVisualSearchOpen(true)}
+            >
+              <Camera size={14} />
+              <span>Try Another Image</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleClearVisualSearch}
+            >
+              <X size={14} />
+              <span>Clear Search</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Category Filter Pills (only when not in visual search) */}
+      {!isVisualSearchActive && (
+        <div className="filter-bar">
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            Filter Category:
+          </span>
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
+              onClick={() => handleCategorySelect(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Product Grid / Loading */}
+      {isLoading && !isVisualSearchActive ? (
         <div className="loading-state">
           <div className="spinner"></div>
           <p>Loading products...</p>
         </div>
       ) : (
         <ProductList
-          products={products}
-          pagination={pagination}
+          products={isVisualSearchActive ? visualSearchResults : products}
+          pagination={
+            isVisualSearchActive
+              ? { page: 1, totalPages: 1, total: visualSearchResults.length }
+              : pagination
+          }
           onPageChange={handlePageChange}
           onDelete={handleDeleteClick}
           onView={(product) => setProductToView(product)}
         />
       )}
+
+      {/* Visual Search Modal */}
+      <VisualSearchModal
+        isOpen={isVisualSearchOpen}
+        onClose={() => setIsVisualSearchOpen(false)}
+        onSearchResults={handleVisualSearchResults}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
